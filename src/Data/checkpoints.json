@@ -1,0 +1,59 @@
+{
+  "checkpoints": [
+    {
+      "trigger": "Zone",
+      "zoneName": "Clearfell Encampment",
+      "message": "Town: Check the skill vendor for new gems"
+    },
+    {
+      "trigger": "Zone",
+      "zoneName": "Vastiri Outskirts",
+      "message": "Act 2: Check vendors for new skill gems and support gems"
+    },
+    {
+      "trigger": "Level",
+      "level": 4,
+      "message": "Level 4: First support gem slot opens — check vendor"
+    },
+    {
+      "trigger": "Level",
+      "level": 8,
+      "message": "Level 8: New support gems available at the vendor"
+    },
+    {
+      "trigger": "Level",
+      "level": 12,
+      "message": "Level 12: Check vendor for skill upgrades. Consider upgrading weapon base"
+    },
+    {
+      "trigger": "Level",
+      "level": 18,
+      "message": "Level 18: New weapon base tier available — look for upgrades"
+    },
+    {
+      "trigger": "Level",
+      "level": 24,
+      "message": "Level 24: Gear upgrade tier — check weapons and armor"
+    },
+    {
+      "trigger": "Level",
+      "level": 28,
+      "message": "Level 28: Significant gear tier — upgrade weapon if possible"
+    },
+    {
+      "trigger": "Level",
+      "level": 33,
+      "message": "Level 33: New weapon/armor bases available"
+    },
+    {
+      "trigger": "Level",
+      "level": 38,
+      "message": "Level 38: Check for weapon and armor upgrades"
+    },
+    {
+      "trigger": "Level",
+      "level": 45,
+      "message": "Level 45: Final campaign gear tier — upgrade everything before maps"
+    }
+  ]
+}
