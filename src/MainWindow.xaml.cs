@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
 using PoE2LevelingCompanion.Services;
@@ -22,12 +23,20 @@ public partial class MainWindow : Window
         if (DataContext is MainViewModel vm)
         {
             var logPath = _settings.ResolveLogFilePath();
-            var checkpointsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "checkpoints.json");
+            var dataDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
+            var checkpointsPath = System.IO.Path.Combine(dataDir, "checkpoints.json");
+            var bestTimesPath = System.IO.Path.Combine(dataDir, "best_times.json");
 
             if (string.IsNullOrEmpty(logPath))
                 vm.StatusText = "Log file not found — set path in appsettings.json";
             else
-                vm.Initialize(logPath, checkpointsPath);
+                vm.Initialize(logPath, checkpointsPath, bestTimesPath);
+
+            vm.Splits.CollectionChanged += (_, _) =>
+            {
+                if (SplitsListBox.Items.Count > 0)
+                    SplitsListBox.ScrollIntoView(SplitsListBox.Items[SplitsListBox.Items.Count - 1]);
+            };
         }
     }
 

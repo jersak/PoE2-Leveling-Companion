@@ -36,5 +36,7 @@
             xmlns:local="clr-namespace:PoE2LevelingCompanion.Converters" />
         <local:ZoneLevelToVisibilityConverter x:Key="ZoneLevelVisibility"
             xmlns:local="clr-namespace:PoE2LevelingCompanion.Converters" />
+        <local:SplitDeltaToBrushConverter x:Key="SplitDeltaBrush"
+            xmlns:local="clr-namespace:PoE2LevelingCompanion.Converters" />
     </Application.Resources>
 </Application>

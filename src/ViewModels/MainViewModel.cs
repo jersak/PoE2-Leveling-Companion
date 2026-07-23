@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using System.IO;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PoE2LevelingCompanion.Models;
@@ -11,6 +11,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly LogWatcherService _logWatcher;
     private readonly CheckpointService _checkpointService;
+    private readonly SplitTimerService _splitTimer;
+    private readonly DispatcherTimer _elapsedTimer;
+
+    private DateTime? _zoneEnteredAt;
+    private string? _previousZoneName;
+    private readonly HashSet<string> _visitedZones = new(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
     private CharacterSession _session = new();
@@ -18,18 +24,30 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _statusText = "Waiting for PoE2...";
 
+    [ObservableProperty]
+    private string _currentZoneElapsed = "";
+
+    [ObservableProperty]
+    private string _totalRunElapsed = "";
+
     public ObservableCollection<Notification> Notifications { get; } = [];
+    public ObservableCollection<ZoneSplit> Splits { get; } = [];
 
     public MainViewModel()
     {
         _logWatcher = new LogWatcherService();
         _checkpointService = new CheckpointService();
+        _splitTimer = new SplitTimerService();
         _logWatcher.OnLogEvent += HandleLogEvent;
+
+        _elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _elapsedTimer.Tick += (_, _) => UpdateElapsedTime();
     }
 
-    public void Initialize(string logFilePath, string checkpointsFilePath)
+    public void Initialize(string logFilePath, string checkpointsFilePath, string bestTimesFilePath)
     {
         _checkpointService.Load(checkpointsFilePath);
+        _splitTimer.Load(bestTimesFilePath);
         _logWatcher.Start(logFilePath);
         StatusText = "Watching log file...";
     }
@@ -43,9 +61,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 break;
 
             case LogEventType.SessionEnd:
+                RecordCurrentZoneSplit(logEvent.Timestamp);
                 Session.IsActive = false;
                 StatusText = "Game closed";
+                _elapsedTimer.Stop();
+                CurrentZoneElapsed = "";
                 break;
+
 
             case LogEventType.AreaGenerated:
                 Session.CurrentAreaId = logEvent.AreaId ?? "";
@@ -53,14 +75,28 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
                 if (logEvent.AreaId == "G1_1" && logEvent.AreaLevel == 1)
                 {
+                    RecordCurrentZoneSplit(logEvent.Timestamp);
                     StartNewSession(logEvent.Timestamp);
                 }
                 break;
 
             case LogEventType.ZoneEntered:
-                ClearNotificationsByType(CheckpointTrigger.Zone);
+                var isNewZone = logEvent.ZoneName != null && logEvent.ZoneName != Session.CurrentZone;
                 Session.CurrentZone = logEvent.ZoneName ?? "";
-                EvaluateCheckpoints(logEvent);
+
+                if (isNewZone)
+                {
+                    ClearNotificationsByType(CheckpointTrigger.Zone);
+                    EvaluateCheckpoints(logEvent);
+
+                    if (_visitedZones.Add(logEvent.ZoneName!))
+                    {
+                        RecordCurrentZoneSplit(logEvent.Timestamp);
+                        _zoneEnteredAt = logEvent.Timestamp;
+                        _previousZoneName = logEvent.ZoneName;
+                        _elapsedTimer.Start();
+                    }
+                }
                 break;
 
             case LogEventType.LevelUp:
@@ -77,6 +113,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    private void RecordCurrentZoneSplit(DateTime exitTimestamp)
+    {
+        if (!_zoneEnteredAt.HasValue || string.IsNullOrEmpty(_previousZoneName))
+            return;
+
+        var duration = exitTimestamp - _zoneEnteredAt.Value;
+        if (duration <= TimeSpan.Zero)
+            return;
+
+        var bestBefore = _splitTimer.GetBestTime(_previousZoneName);
+        var isNewBest = _splitTimer.UpdateBestTime(_previousZoneName, duration);
+        TimeSpan? delta = bestBefore.HasValue ? duration - bestBefore.Value : null;
+
+        Splits.Add(new ZoneSplit
+        {
+            ZoneName = _previousZoneName,
+            Duration = duration,
+            Delta = delta,
+            IsNewBest = isNewBest
+        });
+
+        _zoneEnteredAt = null;
+        _previousZoneName = null;
+    }
+
     private void StartNewSession(DateTime timestamp)
     {
         Session = new CharacterSession
@@ -89,9 +150,34 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsActive = true
         };
         Notifications.Clear();
+        Splits.Clear();
+        _visitedZones.Clear();
+        _zoneEnteredAt = null;
+        _previousZoneName = null;
+        CurrentZoneElapsed = "";
+        TotalRunElapsed = "";
+        _elapsedTimer.Start();
         StatusText = "New character detected!";
         OnPropertyChanged(nameof(Session));
     }
+
+    private void UpdateElapsedTime()
+    {
+        if (_zoneEnteredAt.HasValue)
+        {
+            var elapsed = DateTime.Now - _zoneEnteredAt.Value;
+            CurrentZoneElapsed = FormatElapsed(elapsed);
+        }
+
+        if (Session.IsActive && Session.StartedAt != default)
+        {
+            var total = DateTime.Now - Session.StartedAt;
+            TotalRunElapsed = FormatElapsed(total);
+        }
+    }
+
+    private static string FormatElapsed(TimeSpan t) =>
+        t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss\.f") : t.ToString(@"m\:ss\.f");
 
     private void EvaluateCheckpoints(LogEvent logEvent)
     {
@@ -137,8 +223,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Notifications.Clear();
     }
 
+    [RelayCommand]
+    private void ResetBestTimes()
+    {
+        _splitTimer.Reset();
+    }
+
     public void Dispose()
     {
+        _elapsedTimer.Stop();
         _logWatcher.Dispose();
     }
 }
