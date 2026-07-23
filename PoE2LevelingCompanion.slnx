@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PoE2LevelingCompanion.csproj" />
+  </Folder>
+</Solution>
