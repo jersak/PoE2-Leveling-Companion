@@ -10,7 +10,8 @@
         Topmost="True"
         Background="Transparent"
         ResizeMode="CanResizeWithGrip"
-        ShowInTaskbar="True">
+        ShowInTaskbar="True"
+        Icon="pack://application:,,,/app.ico">
 
     <Window.DataContext>
         <vm:MainViewModel />
