@@ -5,14 +5,14 @@ A lightweight overlay tool for Path of Exile 2 that monitors the game's log file
 ## Features
 
 - **Real-time log monitoring** — tails `client.txt` to detect zone changes, level-ups, and new characters
-- **Checkpoint notifications** — configurable reminders triggered by zone entry or character level (e.g. "check vendor for new gems")
+- **Checkpoint notifications** — configurable reminders triggered by zone entry or character level (e.g. "check vendor for new weapons")
 - **Zone level display** — shows the current zone's monster level with color coding based on the XP penalty formula (green/yellow/red)
 - **Speedrun splits** — per-zone timers with best time tracking, delta display, and a total run timer
-- **Pause/resume** — pause all timers during breaks; paused time is excluded from splits
-- **Best times persistence** — best split times are saved to disk and compared across runs
+- **Pause/resume** — pause/resume all timers
+- **Best times persistence** — best split times are saved to file and compared across runs
 - **Checkpoint editor** — built-in UI to add/remove checkpoints with zone dropdown (grouped by act) and class filtering
 - **Always-on-top overlay** — transparent, borderless, draggable window that works in borderless windowed mode
-- **Sound alerts** — plays a short ping when checkpoints trigger (generated programmatically, no extra files needed)
+- **Sound alerts** — plays a short ping when checkpoints trigger
 - **Auto-clear stale notifications** — zone notifications clear when you enter a new zone; level notifications clear on level-up
 - **New character detection** — automatically starts a new session when creating a character
 - **Window position persistence** — remembers its position and size between launches
@@ -108,4 +108,4 @@ The app reads PoE2's `client.txt` log file by polling for new lines every 500ms.
 
 ## License
 
-MIT
+GPL3
