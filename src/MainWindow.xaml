@@ -158,11 +158,15 @@
                             <DockPanel>
                                 <TextBlock Text="Splits" Foreground="#cccccc" FontSize="12" FontWeight="SemiBold"
                                            VerticalAlignment="Center" />
-                                <Button DockPanel.Dock="Right" Content="Reset"
-                                        Command="{Binding ResetBestTimesCommand}"
-                                        Style="{StaticResource WindowButton}"
-                                        ToolTip="Reset best times" FontSize="10"
-                                        HorizontalAlignment="Right" />
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="{Binding PauseButtonText}"
+                                            Command="{Binding TogglePauseCommand}"
+                                            Style="{StaticResource WindowButton}"
+                                            ToolTip="Pause/Resume timers" FontSize="10" />
+                                    <Button Content="Reset" Click="ResetBestTimes_Click"
+                                            Style="{StaticResource WindowButton}"
+                                            ToolTip="Reset best times" FontSize="10" />
+                                </StackPanel>
                             </DockPanel>
                             <DockPanel Margin="0,2,0,0">
                                 <TextBlock Text="Total:" Foreground="#888888" FontSize="10"

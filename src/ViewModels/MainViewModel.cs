@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private DateTime? _zoneEnteredAt;
     private string? _previousZoneName;
+    private DateTime? _pausedAt;
     private readonly HashSet<string> _visitedZones = new(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
@@ -29,6 +30,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private string _totalRunElapsed = "";
+
+    [ObservableProperty]
+    private bool _timersPaused;
+
+    public string PauseButtonText => TimersPaused ? "▶" : "⏸";
+
+    partial void OnTimersPausedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(PauseButtonText));
+    }
 
     public ObservableCollection<Notification> Notifications { get; } = [];
     public ObservableCollection<ZoneSplit> Splits { get; } = [];
@@ -94,7 +105,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
                         RecordCurrentZoneSplit(logEvent.Timestamp);
                         _zoneEnteredAt = logEvent.Timestamp;
                         _previousZoneName = logEvent.ZoneName;
-                        _elapsedTimer.Start();
+                        if (!TimersPaused)
+                            _elapsedTimer.Start();
                     }
                 }
                 break;
@@ -156,6 +168,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _previousZoneName = null;
         CurrentZoneElapsed = "";
         TotalRunElapsed = "";
+        TimersPaused = false;
+        _pausedAt = null;
         _elapsedTimer.Start();
         StatusText = "New character detected!";
         OnPropertyChanged(nameof(Session));
@@ -221,6 +235,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void ClearNotifications()
     {
         Notifications.Clear();
+    }
+
+    [RelayCommand]
+    private void TogglePause()
+    {
+        if (TimersPaused)
+        {
+            if (_pausedAt.HasValue)
+            {
+                var pauseDuration = DateTime.Now - _pausedAt.Value;
+                if (_zoneEnteredAt.HasValue)
+                    _zoneEnteredAt = _zoneEnteredAt.Value + pauseDuration;
+                if (Session.StartedAt != default)
+                    Session.StartedAt += pauseDuration;
+            }
+            _pausedAt = null;
+            TimersPaused = false;
+            _elapsedTimer.Start();
+        }
+        else
+        {
+            _pausedAt = DateTime.Now;
+            TimersPaused = true;
+            _elapsedTimer.Stop();
+        }
     }
 
     [RelayCommand]

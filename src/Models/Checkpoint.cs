@@ -23,8 +23,8 @@ public sealed class Checkpoint
 
     public string Key => Trigger switch
     {
-        CheckpointTrigger.Level => $"level:{Level}:{Class ?? "*"}",
-        CheckpointTrigger.Zone => $"zone:{ZoneName}:{Class ?? "*"}",
+        CheckpointTrigger.Level => $"level:{Level}:{Class ?? "*"}:{Message}",
+        CheckpointTrigger.Zone => $"zone:{ZoneName}:{Class ?? "*"}:{Message}",
         _ => $"unknown:{Message}"
     };
 }

@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PoE2LevelingCompanion.ViewModels"
         Title="Checkpoint Editor"
-        Width="750" Height="550"
-        MinWidth="600" MinHeight="400"
+        Width="600" Height="500"
+        MinWidth="480" MinHeight="350"
         WindowStartupLocation="CenterScreen"
         Background="#1a1a2e">
 
@@ -13,11 +13,63 @@
     </Window.DataContext>
 
     <Window.Resources>
+        <!-- Dark scrollbar (order matters: dependencies first) -->
+        <Style x:Key="DarkThumb" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="#555577" CornerRadius="4" Margin="2" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ScrollBarPageButton" TargetType="RepeatButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <ControlTemplate x:Key="VerticalScrollBar" TargetType="ScrollBar">
+            <Grid Width="10">
+                <Border Background="#1a1a2e" CornerRadius="4" />
+                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource ScrollBarPageButton}" Command="ScrollBar.PageUpCommand" />
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource DarkThumb}" />
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource ScrollBarPageButton}" Command="ScrollBar.PageDownCommand" />
+                    </Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="#1a1a2e" />
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Template" Value="{StaticResource VerticalScrollBar}" />
+                    <Setter Property="Width" Value="10" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#e8a735" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#aaaaaa" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,6,0" />
         </Style>
 
         <Style x:Key="EditorTextBox" TargetType="TextBox">
@@ -27,6 +79,7 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="6,4" />
             <Setter Property="CaretBrush" Value="#e0e0e0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style x:Key="EditorComboBox" TargetType="ComboBox">
@@ -35,11 +88,36 @@
             <Setter Property="BorderBrush" Value="#444466" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="6,4" />
-        </Style>
-
-        <Style x:Key="EditorCheckBox" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#e0e0e0" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#2a2a3e" />
+                        <Setter Property="Foreground" Value="#e0e0e0" />
+                        <Setter Property="Padding" Value="6,4" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#444466" />
+                                            <Setter Property="Foreground" Value="#ffffff" />
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#3a3a5e" />
+                                            <Setter Property="Foreground" Value="#e8a735" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="ActionButton" TargetType="Button">
@@ -65,167 +143,185 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="SmallButton" TargetType="Button">
+            <Setter Property="Background" Value="#44ffffff" />
+            <Setter Property="Foreground" Value="#1a1a2e" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#66ffffff" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RemoveButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#666666" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#cc5555" />
+                                <Setter Property="Background" Value="#22cc5555" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TabControl Grid.Row="0" Background="Transparent" BorderBrush="#333355">
-            <TabControl.Resources>
-                <Style TargetType="TabItem">
-                    <Setter Property="Background" Value="#22ffffff" />
-                    <Setter Property="Foreground" Value="#aaaaaa" />
-                    <Setter Property="Padding" Value="14,6" />
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="TabItem">
-                                <Border x:Name="Border" Background="{TemplateBinding Background}"
-                                        Padding="{TemplateBinding Padding}"
-                                        BorderBrush="#333355" BorderThickness="1,1,1,0" CornerRadius="4,4,0,0">
-                                    <ContentPresenter ContentSource="Header" />
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="Border" Property="Background" Value="#2a2a3e" />
-                                        <Setter Property="Foreground" Value="#e8a735" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </TabControl.Resources>
+        <!-- Add checkpoint form -->
+        <Border Grid.Row="0" Background="#2a2a3e" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="Add Checkpoint" Style="{StaticResource SectionHeader}" />
 
-            <!-- Zone Checkpoints Tab -->
-            <TabItem Header="Zone Checkpoints">
-                <Border Background="#2a2a3e" Padding="10">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                <!-- Type + Value + Class -->
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="120" />
+                    </Grid.ColumnDefinitions>
 
-                        <TextBox Grid.Row="0" Style="{StaticResource EditorTextBox}"
-                                 Text="{Binding ZoneSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,0,0,8" Tag="Search zones..." />
+                    <TextBlock Grid.Column="0" Text="Type:" Style="{StaticResource FieldLabel}" />
+                    <ComboBox Grid.Column="1" Style="{StaticResource EditorComboBox}"
+                              ItemsSource="{x:Static vm:CheckpointEditorViewModel.TriggerOptions}"
+                              SelectedItem="{Binding NewTrigger}" />
 
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredZoneEntries}"
-                                  AutoGenerateColumns="False" CanUserAddRows="False"
-                                  Background="Transparent" Foreground="#e0e0e0"
-                                  BorderThickness="0" GridLinesVisibility="Horizontal"
-                                  HorizontalGridLinesBrush="#333355"
-                                  RowBackground="#2a2a3e" AlternatingRowBackground="#252540"
-                                  HeadersVisibility="Column" SelectionMode="Single"
-                                  CanUserResizeRows="False">
-                            <DataGrid.ColumnHeaderStyle>
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="Background" Value="#1a1a2e" />
-                                    <Setter Property="Foreground" Value="#e8a735" />
-                                    <Setter Property="Padding" Value="8,6" />
-                                    <Setter Property="BorderBrush" Value="#333355" />
-                                    <Setter Property="BorderThickness" Value="0,0,1,1" />
-                                </Style>
-                            </DataGrid.ColumnHeaderStyle>
-                            <DataGrid.CellStyle>
-                                <Style TargetType="DataGridCell">
-                                    <Setter Property="Foreground" Value="#e0e0e0" />
-                                    <Setter Property="BorderThickness" Value="0" />
-                                    <Setter Property="Padding" Value="4,2" />
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="DataGridCell">
-                                                <Border Padding="{TemplateBinding Padding}" Background="Transparent">
-                                                    <ContentPresenter VerticalAlignment="Center" />
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </DataGrid.CellStyle>
-                            <DataGrid.Columns>
-                                <DataGridCheckBoxColumn Header="On" Binding="{Binding HasCheckpoint, UpdateSourceTrigger=PropertyChanged}" Width="40" />
-                                <DataGridTextColumn Header="Act" Binding="{Binding Act}" Width="Auto" IsReadOnly="True" />
-                                <DataGridTextColumn Header="Zone" Binding="{Binding ZoneName}" Width="160" IsReadOnly="True" />
-                                <DataGridTextColumn Header="Message" Binding="{Binding Message, UpdateSourceTrigger=PropertyChanged}" Width="*">
-                                    <DataGridTextColumn.EditingElementStyle>
-                                        <Style TargetType="TextBox">
-                                            <Setter Property="Background" Value="#1a1a2e" />
-                                            <Setter Property="Foreground" Value="#e0e0e0" />
-                                            <Setter Property="CaretBrush" Value="#e0e0e0" />
-                                        </Style>
-                                    </DataGridTextColumn.EditingElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridComboBoxColumn Header="Class" Width="120"
-                                    SelectedItemBinding="{Binding ClassFilter, UpdateSourceTrigger=PropertyChanged}"
-                                    ItemsSource="{Binding Source={x:Static vm:CheckpointEditorViewModel.ClassOptionsStatic}}" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Grid>
-                </Border>
-            </TabItem>
-
-            <!-- Level Checkpoints Tab -->
-            <TabItem Header="Level Checkpoints">
-                <Border Background="#2a2a3e" Padding="10">
-                    <DataGrid ItemsSource="{Binding LevelEntries}"
-                              AutoGenerateColumns="False" CanUserAddRows="False"
-                              Background="Transparent" Foreground="#e0e0e0"
-                              BorderThickness="0" GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="#333355"
-                              RowBackground="#2a2a3e" AlternatingRowBackground="#252540"
-                              HeadersVisibility="Column" SelectionMode="Single"
-                              CanUserResizeRows="False">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="#1a1a2e" />
-                                <Setter Property="Foreground" Value="#e8a735" />
-                                <Setter Property="Padding" Value="8,6" />
-                                <Setter Property="BorderBrush" Value="#333355" />
-                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                    <TextBlock Grid.Column="3">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource FieldLabel}">
+                                <Setter Property="Text" Value="Zone:" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsZoneTrigger}" Value="False">
+                                        <Setter Property="Text" Value="Level:" />
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
-                        </DataGrid.ColumnHeaderStyle>
-                        <DataGrid.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="Foreground" Value="#e0e0e0" />
-                                <Setter Property="BorderThickness" Value="0" />
-                                <Setter Property="Padding" Value="4,2" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="DataGridCell">
-                                            <Border Padding="{TemplateBinding Padding}" Background="Transparent">
-                                                <ContentPresenter VerticalAlignment="Center" />
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </DataGrid.CellStyle>
-                        <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="On" Binding="{Binding HasCheckpoint, UpdateSourceTrigger=PropertyChanged}" Width="40" />
-                            <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="60" IsReadOnly="True" />
-                            <DataGridTextColumn Header="Message" Binding="{Binding Message, UpdateSourceTrigger=PropertyChanged}" Width="*">
-                                <DataGridTextColumn.EditingElementStyle>
-                                    <Style TargetType="TextBox">
-                                        <Setter Property="Background" Value="#1a1a2e" />
-                                        <Setter Property="Foreground" Value="#e0e0e0" />
-                                        <Setter Property="CaretBrush" Value="#e0e0e0" />
-                                    </Style>
-                                </DataGridTextColumn.EditingElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridComboBoxColumn Header="Class" Width="120"
-                                SelectedItemBinding="{Binding ClassFilter, UpdateSourceTrigger=PropertyChanged}"
-                                ItemsSource="{Binding Source={x:Static vm:CheckpointEditorViewModel.ClassOptionsStatic}}" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
-            </TabItem>
-        </TabControl>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBox Grid.Column="4" Style="{StaticResource EditorTextBox}"
+                             Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Column="6" Text="Class:" Style="{StaticResource FieldLabel}" />
+                    <ComboBox Grid.Column="7" Style="{StaticResource EditorComboBox}"
+                              ItemsSource="{x:Static vm:CheckpointEditorViewModel.ClassOptionsStatic}"
+                              SelectedItem="{Binding NewClass}" />
+                </Grid>
+
+                <!-- Message + Add -->
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="+ Add"
+                            Command="{Binding AddCommand}"
+                            Style="{StaticResource SmallButton}"
+                            Foreground="#e8a735" Margin="8,0,0,0" />
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" Text="Message:" Style="{StaticResource FieldLabel}" />
+                        <TextBox Style="{StaticResource EditorTextBox}"
+                                 Text="{Binding NewMessage, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+                </DockPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Entries list -->
+        <Grid Grid.Row="1">
+            <ListBox ItemsSource="{Binding Entries}"
+                     Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,4" Padding="10,8" Background="#2a2a3e" CornerRadius="4">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="&#x2715;"
+                                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource RemoveButton}"
+                                        Margin="8,0,0,0" />
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,3">
+                                        <Border Background="#33e8a735" CornerRadius="3" Padding="6,1" Margin="0,0,6,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding TriggerBadge}" Foreground="#e8a735" FontSize="10" />
+                                        </Border>
+                                        <TextBlock Text="{Binding TriggerLabel}" Foreground="#cccccc"
+                                                   FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ClassDisplay}"
+                                                   Foreground="#666666" FontSize="10"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                    <TextBlock Text="{Binding Message}" Foreground="#aaaaaa"
+                                               FontSize="12" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Empty state -->
+            <TextBlock Text="No checkpoints — add one above"
+                       Foreground="#555555" FontSize="12"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding Entries.Count, Converter={StaticResource EmptyToVisibility}}" />
+        </Grid>
 
         <!-- Bottom bar -->
-        <DockPanel Grid.Row="1" Margin="0,10,0,0">
+        <DockPanel Grid.Row="2" Margin="0,10,0,0">
             <Button DockPanel.Dock="Right" Content="Save Checkpoints"
                     Command="{Binding SaveCommand}" Style="{StaticResource ActionButton}" />
             <TextBlock Text="{Binding StatusMessage}" Foreground="#88cc88" FontSize="12"
