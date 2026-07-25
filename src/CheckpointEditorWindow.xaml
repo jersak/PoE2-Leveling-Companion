@@ -116,7 +116,10 @@
                           MinWidth="{TemplateBinding ActualWidth}"
                           MaxHeight="{TemplateBinding MaxDropDownHeight}">
                         <Border Background="#2a2a3e" BorderBrush="#444466" BorderThickness="1" />
-                        <ScrollViewer Margin="1" SnapsToDevicePixels="True">
+                        <ScrollViewer Margin="1" SnapsToDevicePixels="True"
+                                      CanContentScroll="False"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
                             <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                         </ScrollViewer>
                     </Grid>
@@ -248,12 +251,27 @@
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Add checkpoint form -->
+        <!-- Log file path -->
         <Border Grid.Row="0" Background="#2a2a3e" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="PoE2 client.txt log file" Style="{StaticResource SectionHeader}" />
+                <Button DockPanel.Dock="Right" Content="Browse..."
+                        Click="BrowseLogFile_Click"
+                        Style="{StaticResource SmallButton}"
+                        Foreground="#e8a735" Margin="8,0,0,0" />
+                <TextBox x:Name="LogFilePathBox" IsReadOnly="True"
+                         Style="{StaticResource EditorTextBox}"
+                         Text="(not set — will auto-detect)" />
+            </DockPanel>
+        </Border>
+
+        <!-- Add checkpoint form -->
+        <Border Grid.Row="1" Background="#2a2a3e" CornerRadius="6" Padding="12" Margin="0,0,0,10">
             <StackPanel>
                 <TextBlock Text="Add Checkpoint" Style="{StaticResource SectionHeader}" />
 
@@ -355,7 +373,7 @@
         </Border>
 
         <!-- Entries list -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <ListBox ItemsSource="{Binding Entries}"
                      Background="Transparent" BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -413,7 +431,7 @@
         </Grid>
 
         <!-- Bottom bar -->
-        <DockPanel Grid.Row="2" Margin="0,10,0,0">
+        <DockPanel Grid.Row="3" Margin="0,10,0,0">
             <Button DockPanel.Dock="Right" Content="Save Checkpoints"
                     Command="{Binding SaveCommand}" Style="{StaticResource ActionButton}" />
             <TextBlock Text="{Binding StatusMessage}" Foreground="#88cc88" FontSize="12"

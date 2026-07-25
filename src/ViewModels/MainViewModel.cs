@@ -225,6 +225,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _checkpointService.Load(checkpointsFilePath);
     }
 
+    public void SwitchLogFile(string logFilePath)
+    {
+        _logWatcher.Start(logFilePath);
+        StatusText = "Watching log file...";
+    }
+
     [RelayCommand]
     private void DismissNotification(Notification notification)
     {

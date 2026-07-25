@@ -73,7 +73,12 @@ public partial class MainWindow : Window
     private void EditCheckpoints_Click(object sender, RoutedEventArgs e)
     {
         var checkpointsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "checkpoints.json");
-        var editor = new CheckpointEditorWindow(checkpointsPath) { Owner = this, Topmost = true };
+        var editor = new CheckpointEditorWindow(checkpointsPath, _settings) { Owner = this, Topmost = true };
+        editor.LogFilePathChanged += path =>
+        {
+            if (DataContext is MainViewModel vm2)
+                vm2.SwitchLogFile(path);
+        };
         editor.ShowDialog();
 
         if (DataContext is MainViewModel vm)
