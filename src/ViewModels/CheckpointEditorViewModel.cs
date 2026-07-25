@@ -7,6 +7,13 @@ using PoE2LevelingCompanion.Models;
 
 namespace PoE2LevelingCompanion.ViewModels;
 
+public sealed class ZoneOption
+{
+    public required string Act { get; init; }
+    public required string ZoneName { get; init; }
+    public override string ToString() => ZoneName;
+}
+
 public sealed class CheckpointEntryViewModel
 {
     public CheckpointTrigger Trigger { get; init; }
@@ -37,12 +44,18 @@ public partial class CheckpointEditorViewModel : ObservableObject
 
     public static string[] ClassOptionsStatic { get; } = ["Any", .. ZoneData.Classes];
     public static CheckpointTrigger[] TriggerOptions { get; } = [CheckpointTrigger.Zone, CheckpointTrigger.Level];
+    public static ZoneOption[] ZoneOptionsStatic { get; } = ZoneData.CampaignZones
+        .SelectMany(g => g.Zones.Select(z => new ZoneOption { Act = g.Act, ZoneName = z }))
+        .ToArray();
 
     [ObservableProperty]
     private CheckpointTrigger _newTrigger = CheckpointTrigger.Zone;
 
     [ObservableProperty]
-    private string _newValue = "";
+    private ZoneOption? _newZone;
+
+    [ObservableProperty]
+    private string _newLevelText = "";
 
     [ObservableProperty]
     private string _newMessage = "";
@@ -58,7 +71,8 @@ public partial class CheckpointEditorViewModel : ObservableObject
     partial void OnNewTriggerChanged(CheckpointTrigger value)
     {
         OnPropertyChanged(nameof(IsZoneTrigger));
-        NewValue = "";
+        NewZone = null;
+        NewLevelText = "";
     }
 
     public void Load(string filePath)
@@ -98,23 +112,23 @@ public partial class CheckpointEditorViewModel : ObservableObject
 
         if (NewTrigger == CheckpointTrigger.Zone)
         {
-            if (string.IsNullOrWhiteSpace(NewValue))
+            if (NewZone == null)
             {
-                StatusMessage = "Zone name is required";
+                StatusMessage = "Select a zone";
                 return;
             }
 
             Entries.Add(new CheckpointEntryViewModel
             {
                 Trigger = CheckpointTrigger.Zone,
-                ZoneName = NewValue.Trim(),
+                ZoneName = NewZone.ZoneName,
                 Message = NewMessage.Trim(),
                 ClassFilter = NewClass is "Any" ? null : NewClass
             });
         }
         else
         {
-            if (!int.TryParse(NewValue, out var level) || level < 1 || level > 100)
+            if (!int.TryParse(NewLevelText, out var level) || level < 1 || level > 100)
             {
                 StatusMessage = "Level must be between 1 and 100";
                 return;

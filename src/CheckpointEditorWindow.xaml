@@ -194,6 +194,12 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <CollectionViewSource x:Key="GroupedZones"
+                              Source="{x:Static vm:CheckpointEditorViewModel.ZoneOptionsStatic}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Act" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
     </Window.Resources>
 
     <Grid Margin="12">
@@ -238,8 +244,51 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <TextBox Grid.Column="4" Style="{StaticResource EditorTextBox}"
-                             Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <!-- Zone dropdown (visible when Zone trigger) -->
+                    <ComboBox Grid.Column="4"
+                              ItemsSource="{Binding Source={StaticResource GroupedZones}}"
+                              DisplayMemberPath="ZoneName"
+                              SelectedItem="{Binding NewZone}"
+                              IsTextSearchEnabled="True"
+                              TextSearch.TextPath="ZoneName"
+                              MaxDropDownHeight="350">
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource EditorComboBox}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsZoneTrigger}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.Style>
+                        <ComboBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                   Foreground="#e8a735" Background="#1a1a2e"
+                                                   Padding="6,4,6,2" FontSize="11" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ComboBox.GroupStyle>
+                    </ComboBox>
+
+                    <!-- Level text box (visible when Level trigger) -->
+                    <TextBox Grid.Column="4"
+                             Text="{Binding NewLevelText, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource EditorTextBox}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsZoneTrigger}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
 
                     <TextBlock Grid.Column="6" Text="Class:" Style="{StaticResource FieldLabel}" />
                     <ComboBox Grid.Column="7" Style="{StaticResource EditorComboBox}"
