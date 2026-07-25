@@ -7,33 +7,20 @@ using PoE2LevelingCompanion.Models;
 
 namespace PoE2LevelingCompanion.ViewModels;
 
-public partial class ZoneEntryViewModel : ObservableObject
+public sealed class CheckpointEntryViewModel
 {
-    public string ZoneName { get; init; } = "";
-    public string Act { get; init; } = "";
+    public CheckpointTrigger Trigger { get; init; }
+    public string? ZoneName { get; init; }
+    public int? Level { get; init; }
+    public required string Message { get; init; }
+    public string? ClassFilter { get; init; }
 
-    [ObservableProperty]
-    private string _message = "";
+    public string TriggerLabel => Trigger == CheckpointTrigger.Zone
+        ? ZoneName ?? ""
+        : $"Level {Level}";
 
-    [ObservableProperty]
-    private string? _classFilter;
-
-    [ObservableProperty]
-    private bool _hasCheckpoint;
-}
-
-public partial class LevelEntryViewModel : ObservableObject
-{
-    public int Level { get; init; }
-
-    [ObservableProperty]
-    private string _message = "";
-
-    [ObservableProperty]
-    private string? _classFilter;
-
-    [ObservableProperty]
-    private bool _hasCheckpoint;
+    public string TriggerBadge => Trigger == CheckpointTrigger.Zone ? "Zone" : "Level";
+    public string ClassDisplay => ClassFilter ?? "Any";
 }
 
 public partial class CheckpointEditorViewModel : ObservableObject
@@ -46,130 +33,132 @@ public partial class CheckpointEditorViewModel : ObservableObject
 
     private string _filePath = "";
 
-    public ObservableCollection<ZoneEntryViewModel> ZoneEntries { get; } = [];
-    public ObservableCollection<LevelEntryViewModel> LevelEntries { get; } = [];
-    public ObservableCollection<ZoneEntryViewModel> FilteredZoneEntries { get; } = [];
+    public ObservableCollection<CheckpointEntryViewModel> Entries { get; } = [];
+
     public static string[] ClassOptionsStatic { get; } = ["Any", .. ZoneData.Classes];
-    public string[] ClassOptions => ClassOptionsStatic;
+    public static CheckpointTrigger[] TriggerOptions { get; } = [CheckpointTrigger.Zone, CheckpointTrigger.Level];
 
     [ObservableProperty]
-    private string _zoneSearchText = "";
+    private CheckpointTrigger _newTrigger = CheckpointTrigger.Zone;
+
+    [ObservableProperty]
+    private string _newValue = "";
+
+    [ObservableProperty]
+    private string _newMessage = "";
+
+    [ObservableProperty]
+    private string _newClass = "Any";
 
     [ObservableProperty]
     private string _statusMessage = "";
 
-    partial void OnZoneSearchTextChanged(string value)
+    public bool IsZoneTrigger => NewTrigger == CheckpointTrigger.Zone;
+
+    partial void OnNewTriggerChanged(CheckpointTrigger value)
     {
-        ApplyZoneFilter();
+        OnPropertyChanged(nameof(IsZoneTrigger));
+        NewValue = "";
     }
 
-    public void Load(string checkpointsFilePath)
+    public void Load(string filePath)
     {
-        _filePath = checkpointsFilePath;
+        _filePath = filePath;
+        if (!File.Exists(filePath)) return;
 
-        foreach (var (act, zones) in ZoneData.CampaignZones)
+        try
         {
-            foreach (var zone in zones)
+            var json = File.ReadAllText(filePath);
+            var file = JsonSerializer.Deserialize<CheckpointFile>(json, JsonOptions);
+            if (file == null) return;
+
+            foreach (var cp in file.Checkpoints)
             {
-                ZoneEntries.Add(new ZoneEntryViewModel { ZoneName = zone, Act = act });
-            }
-        }
-
-        for (int i = 1; i <= 100; i++)
-        {
-            LevelEntries.Add(new LevelEntryViewModel { Level = i });
-        }
-
-        if (File.Exists(checkpointsFilePath))
-        {
-            try
-            {
-                var json = File.ReadAllText(checkpointsFilePath);
-                var file = JsonSerializer.Deserialize<CheckpointFile>(json, JsonOptions);
-                if (file != null)
-                    ApplyExistingCheckpoints(file.Checkpoints);
-            }
-            catch { }
-        }
-
-        ApplyZoneFilter();
-    }
-
-    private void ApplyExistingCheckpoints(List<Checkpoint> checkpoints)
-    {
-        foreach (var cp in checkpoints)
-        {
-            if (cp.Trigger == CheckpointTrigger.Zone && cp.ZoneName != null)
-            {
-                var entry = ZoneEntries.FirstOrDefault(z =>
-                    z.ZoneName.Equals(cp.ZoneName, StringComparison.OrdinalIgnoreCase));
-                if (entry != null)
+                Entries.Add(new CheckpointEntryViewModel
                 {
-                    entry.HasCheckpoint = true;
-                    entry.Message = cp.Message;
-                    entry.ClassFilter = cp.Class;
-                }
-            }
-            else if (cp.Trigger == CheckpointTrigger.Level && cp.Level is > 0 and <= 100)
-            {
-                var entry = LevelEntries.FirstOrDefault(l => l.Level == cp.Level);
-                if (entry != null)
-                {
-                    entry.HasCheckpoint = true;
-                    entry.Message = cp.Message;
-                    entry.ClassFilter = cp.Class;
-                }
+                    Trigger = cp.Trigger,
+                    ZoneName = cp.ZoneName,
+                    Level = cp.Level,
+                    Message = cp.Message,
+                    ClassFilter = cp.Class
+                });
             }
         }
+        catch { }
     }
 
-    private void ApplyZoneFilter()
+    [RelayCommand]
+    private void Add()
     {
-        FilteredZoneEntries.Clear();
-        var search = ZoneSearchText.Trim();
-
-        foreach (var entry in ZoneEntries)
+        if (string.IsNullOrWhiteSpace(NewMessage))
         {
-            if (string.IsNullOrEmpty(search)
-                || entry.ZoneName.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || entry.Act.Contains(search, StringComparison.OrdinalIgnoreCase))
-            {
-                FilteredZoneEntries.Add(entry);
-            }
+            StatusMessage = "Message is required";
+            return;
         }
+
+        if (NewTrigger == CheckpointTrigger.Zone)
+        {
+            if (string.IsNullOrWhiteSpace(NewValue))
+            {
+                StatusMessage = "Zone name is required";
+                return;
+            }
+
+            Entries.Add(new CheckpointEntryViewModel
+            {
+                Trigger = CheckpointTrigger.Zone,
+                ZoneName = NewValue.Trim(),
+                Message = NewMessage.Trim(),
+                ClassFilter = NewClass is "Any" ? null : NewClass
+            });
+        }
+        else
+        {
+            if (!int.TryParse(NewValue, out var level) || level < 1 || level > 100)
+            {
+                StatusMessage = "Level must be between 1 and 100";
+                return;
+            }
+
+            Entries.Add(new CheckpointEntryViewModel
+            {
+                Trigger = CheckpointTrigger.Level,
+                Level = level,
+                Message = NewMessage.Trim(),
+                ClassFilter = NewClass is "Any" ? null : NewClass
+            });
+        }
+
+        NewMessage = "";
+        StatusMessage = "";
+    }
+
+    [RelayCommand]
+    private void Remove(CheckpointEntryViewModel entry)
+    {
+        Entries.Remove(entry);
     }
 
     [RelayCommand]
     private void Save()
     {
-        var checkpoints = new List<Checkpoint>();
-
-        foreach (var zone in ZoneEntries.Where(z => z.HasCheckpoint && !string.IsNullOrWhiteSpace(z.Message)))
+        var checkpoints = Entries.Select(e => new Checkpoint
         {
-            checkpoints.Add(new Checkpoint
-            {
-                Trigger = CheckpointTrigger.Zone,
-                ZoneName = zone.ZoneName,
-                Message = zone.Message.Trim(),
-                Class = zone.ClassFilter is "Any" or null ? null : zone.ClassFilter
-            });
-        }
-
-        foreach (var level in LevelEntries.Where(l => l.HasCheckpoint && !string.IsNullOrWhiteSpace(l.Message)))
-        {
-            checkpoints.Add(new Checkpoint
-            {
-                Trigger = CheckpointTrigger.Level,
-                Level = level.Level,
-                Message = level.Message.Trim(),
-                Class = level.ClassFilter is "Any" or null ? null : level.ClassFilter
-            });
-        }
+            Trigger = e.Trigger,
+            ZoneName = e.ZoneName,
+            Level = e.Level,
+            Message = e.Message,
+            Class = e.ClassFilter
+        }).ToList();
 
         var file = new CheckpointFile { Checkpoints = checkpoints };
         var json = JsonSerializer.Serialize(file, JsonOptions);
-        File.WriteAllText(_filePath, json);
 
+        var dir = Path.GetDirectoryName(_filePath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+
+        File.WriteAllText(_filePath, json);
         StatusMessage = $"Saved {checkpoints.Count} checkpoints";
     }
 }

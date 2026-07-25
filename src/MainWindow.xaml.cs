@@ -80,6 +80,18 @@ public partial class MainWindow : Window
             vm.ReloadCheckpoints(checkpointsPath);
     }
 
+    private void ResetBestTimes_Click(object sender, RoutedEventArgs e)
+    {
+        var result = MessageBox.Show(
+            "Are you sure you want to reset all best times?",
+            "Reset Best Times",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes && DataContext is MainViewModel vm)
+            vm.ResetBestTimesCommand.Execute(null);
+    }
+
     private void Minimize_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
