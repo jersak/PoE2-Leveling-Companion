@@ -82,6 +82,48 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!-- Dark ComboBox toggle button -->
+        <ControlTemplate x:Key="DarkComboBoxToggle" TargetType="ToggleButton">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.ColumnSpan="2" Background="#2a2a3e" BorderBrush="#444466" BorderThickness="1" />
+                <Path Grid.Column="1" Data="M 0 0 L 4 4 L 8 0 Z"
+                      Fill="#aaaaaa" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+        </ControlTemplate>
+
+        <!-- Dark ComboBox template -->
+        <ControlTemplate x:Key="DarkComboBoxTemplate" TargetType="ComboBox">
+            <Grid>
+                <ToggleButton Template="{StaticResource DarkComboBoxToggle}"
+                              Focusable="False"
+                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                              ClickMode="Press" />
+                <ContentPresenter IsHitTestVisible="False"
+                                  Content="{TemplateBinding SelectionBoxItem}"
+                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                  ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                  Margin="6,4,23,4"
+                                  VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <Popup Placement="Bottom"
+                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                       AllowsTransparency="True" Focusable="False"
+                       PopupAnimation="Slide">
+                    <Grid SnapsToDevicePixels="True"
+                          MinWidth="{TemplateBinding ActualWidth}"
+                          MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                        <Border Background="#2a2a3e" BorderBrush="#444466" BorderThickness="1" />
+                        <ScrollViewer Margin="1" SnapsToDevicePixels="True">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                        </ScrollViewer>
+                    </Grid>
+                </Popup>
+            </Grid>
+        </ControlTemplate>
+
         <Style x:Key="EditorComboBox" TargetType="ComboBox">
             <Setter Property="Background" Value="#2a2a3e" />
             <Setter Property="Foreground" Value="#e0e0e0" />
@@ -89,6 +131,7 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="6,4" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Template" Value="{StaticResource DarkComboBoxTemplate}" />
             <Setter Property="ItemContainerStyle">
                 <Setter.Value>
                     <Style TargetType="ComboBoxItem">
