@@ -1,0 +1,111 @@
+# PoE2 Leveling Companion
+
+A lightweight overlay tool for Path of Exile 2 that monitors the game's log file in real-time and displays reminders at key leveling checkpoints. Built with C# / WPF (.NET 10).
+
+## Features
+
+- **Real-time log monitoring** — tails `client.txt` to detect zone changes, level-ups, and new characters
+- **Checkpoint notifications** — configurable reminders triggered by zone entry or character level (e.g. "check vendor for new gems")
+- **Zone level display** — shows the current zone's monster level with color coding based on the XP penalty formula (green/yellow/red)
+- **Speedrun splits** — per-zone timers with best time tracking, delta display, and a total run timer
+- **Pause/resume** — pause all timers during breaks; paused time is excluded from splits
+- **Best times persistence** — best split times are saved to disk and compared across runs
+- **Checkpoint editor** — built-in UI to add/remove checkpoints with zone dropdown (grouped by act) and class filtering
+- **Always-on-top overlay** — transparent, borderless, draggable window that works in borderless windowed mode
+- **Sound alerts** — plays a short ping when checkpoints trigger (generated programmatically, no extra files needed)
+- **Auto-clear stale notifications** — zone notifications clear when you enter a new zone; level notifications clear on level-up
+- **New character detection** — automatically starts a new session when creating a character
+- **Window position persistence** — remembers its position and size between launches
+
+## Requirements
+
+- Windows 10 or later
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (to build from source)
+- Path of Exile 2
+
+## Building
+
+```bash
+git clone https://github.com/jersak/PoE2-Leveling-Companion.git
+cd PoE2-Leveling-Companion
+dotnet build src/PoE2LevelingCompanion.csproj
+```
+
+## Publishing a standalone executable
+
+```bash
+dotnet publish src/PoE2LevelingCompanion.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+```
+
+The output will be in `src/bin/Release/net10.0-windows/win-x64/publish/`.
+
+## Running
+
+Run the executable or launch from source:
+
+```bash
+dotnet run --project src/PoE2LevelingCompanion.csproj
+```
+
+The app auto-detects the PoE2 log file from common Steam install paths. If your install is in a non-standard location, set the path in `appsettings.json` next to the executable:
+
+```json
+{
+  "logFilePath": "D:\\Path\\To\\Path of Exile 2\\logs\\client.txt"
+}
+```
+
+## Checkpoints
+
+Checkpoints are stored in `Data/checkpoints.json` next to the executable. You can edit them through the built-in editor (gear icon in the title bar) or directly in the JSON file:
+
+```json
+{
+  "checkpoints": [
+    {
+      "trigger": "Zone",
+      "zoneName": "Clearfell Encampment",
+      "message": "Check the skill vendor for new gems"
+    },
+    {
+      "trigger": "Level",
+      "level": 12,
+      "class": "Huntress",
+      "message": "Lightning Arrow becomes available!"
+    }
+  ]
+}
+```
+
+- **trigger** — `"Zone"` or `"Level"`
+- **zoneName** — exact zone name (for zone triggers)
+- **level** — character level (for level triggers)
+- **class** — optional, restricts the checkpoint to a specific class
+- **message** — the notification text
+
+Multiple checkpoints can share the same zone or level.
+
+## Speedrun Splits
+
+The splits panel tracks time spent in each zone (first visit only — revisits and town trips don't reset the timer). Best times are saved to `Data/best_times.json` and deltas are shown in green (faster) or red (slower).
+
+- **Pause/Resume** — the pause button (in the splits header) freezes all timers
+- **Reset** — clears all saved best times (with confirmation)
+
+## How it works
+
+The app reads PoE2's `client.txt` log file by polling for new lines every 500ms. It parses log events using regex:
+
+- `[LOADING SCREEN] (Zone Name)` — zone transitions
+- `Generating level N area "AREA_ID"` — area level detection and new character detection (`G1_1` at level 1)
+- `CharName (Class) is now level N` — level-ups and character identification
+
+## Tech stack
+
+- C# / .NET 10 / WPF
+- MVVM with [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
+- No external runtime dependencies
+
+## License
+
+MIT
